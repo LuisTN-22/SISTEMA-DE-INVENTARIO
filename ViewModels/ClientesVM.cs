@@ -1,4 +1,5 @@
 ﻿using LinqToDB;
+using Models;
 using Models.Conexion;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace ViewModels
         private CheckBox _checkBoxCredito;
         private Bitmap _imagBitmap;
         private static DataGridView _dataGridView1;
+        private int _reg_por_pagina = 10, _num_pagina = 1;
         public ClientesVM(object[] objectos, List<TextBox> textBoxCliente, List<Label> labelCliente)
         {
             _textBoxCliente = textBoxCliente;
@@ -30,6 +32,7 @@ namespace ViewModels
             _imagBitmap = (Bitmap)objectos[2];
             _dataGridView1 = (DataGridView)objectos[3];
             evento = new TextBoxEvent();
+            restablecer();
         }
         public void guardarCliente()
         {
@@ -167,9 +170,24 @@ namespace ViewModels
                 MessageBox.Show(ex.Message);           
             }
         }
+        public async Task SearhClientesAsync(string campo)
+        {
+            List<TClientes> query;
+            int inicio = (_num_pagina - 1) * _reg_por_pagina;
+            if (campo.Equals(""))
+            {
+                query = await TClientes.ToListAsync();
+            }
+            else
+            {
+                query = await TClientes.Where(c => c.Nid.StartsWith(campo) || c.Nombre.StartsWith(campo) || c.Apellido.StartsWith(campo)).ToListAsync();
+            }
+            _dataGridView1.DataSource = query.Skip(inicio).Take(_reg_por_pagina).ToList();
+        }
         public void restablecer()
         {
             _accion = "insert";
+            _num_pagina = 1;
             _imagePictureBox.Image = _imagBitmap;
             _textBoxCliente[0].Text = "";
             _textBoxCliente[1].Text = "";
@@ -191,6 +209,7 @@ namespace ViewModels
             _labelCliente[4].ForeColor = Color.LightSlateGray;
             _labelCliente[5].Text = "Direccion";
             _labelCliente[5].ForeColor = Color.LightSlateGray;
+            _ = SearhClientesAsync("");
         }
     }
 }
